@@ -4,5 +4,7 @@
 
 class Module {
 public:
-    virtual void processEvent(Event* e);
+    virtual void init() {}
+    virtual void processEvent(Event* e) {}
+    virtual void cleanup() {}
 };

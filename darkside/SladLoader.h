@@ -27,6 +27,14 @@ public:
         sladTrees.push_back(treeName);
     }
 
+    void loadDefaultSlad() {
+        addSladFile("_allpulses.root", "pulse_info");
+        addSladFile("_masas_xy.root", "allpulses_xy");
+        addSladFile("_veto_cluster.root", "veto");
+        addSladFile("_xylocator_xy.root", "allpulses_xyl_xy");
+        addSladFile("_aww_xy.root", "allpulses_aww_xy");
+    }
+
     TTree* getFullTree() {
         TFile* main = new TFile(mainFileName);
         TTree* events = (TTree*) main->Get("events");

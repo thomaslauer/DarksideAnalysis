@@ -22,8 +22,8 @@ struct Event {
 	float total_s1_bottom;
 
 	// variables from xy file
-	float  x;
-	float  y;
+	// float  x;
+	// float  y;
 
 	// variables from allpulses file
 	float pulse_start_time[100];
