@@ -4,6 +4,7 @@
 #include <iostream>
 
 #include "TH1.h"
+#include "TH2.h"
 
 using namespace std;
 
@@ -13,17 +14,15 @@ class DemoHist : public Module {
 
     void init() {
         cout << "Running init" << endl;
-        testHistogram = new TH1F("testHistogram", "testing a histogram", 50, 0, 50);
+        testHistogram = new TH1F("testHistogram", "testing a histogram", 1000, -20, 20);
     }
     
     void processEvent(Event * e) {
         testHistogram->Fill(e->npulses);
-        //cout << "running process on event " << e->event_id << endl;
     }
 
     void cleanup() {
 
         cout << "cleaning up" << endl;
-        testHistogram->Draw();
     }
 };

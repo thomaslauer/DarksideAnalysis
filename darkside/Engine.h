@@ -3,8 +3,6 @@
 #include <vector>
 #include <iostream>
 
-#include "TThread.h"
-
 #include "Module.h"
 #include "SladLoader.h"
 #include "Event.h"
@@ -14,6 +12,8 @@ using namespace std;
 class Engine {
 public:
     vector<Module*> modules;
+
+    TString output = "output.root";
 
     SladLoader* slad;
 
@@ -25,9 +25,16 @@ public:
         modules.push_back(m);
     }
 
+    void setOutput(TString newOutputFile) {
+        output = newOutputFile;
+    }
+
     void run(int nevents = -1) {
         Event e;
         TTree* events = slad->getFullTree();
+
+        TFile* outputFile = new TFile(output, "recreate");
+        outputFile->cd();
 
         for(unsigned int i = 0; i < modules.size(); i++) {
             modules[i]->init();
@@ -56,5 +63,7 @@ public:
         for(unsigned int i = 0; i < modules.size(); i++) {
             modules[i]->cleanup();
         }
+        outputFile->Write();
+        outputFile->Close();
     }
 };
