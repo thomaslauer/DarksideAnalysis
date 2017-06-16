@@ -4,17 +4,30 @@
 
 #include "darkside/SladLoader.h"
 #include "darkside/Module.h"
+#include "darkside/EnergyCorrections.h"
 
 #include "DemoHist.h"
+#include "CalculateEnergy.h"
 
 void Main() {
-    SladLoader* slad = new SladLoader("/mnt/c/Users/Thomas/Desktop/PhysicsCode/70daySample/UAr_70d_SLAD_v2_3_2_merged_open.root");
-    slad->loadDefaultSlad();
+    Engine::init("/mnt/c/Users/Thomas/Desktop/PhysicsCode/70daySample/UAr_70d_SLAD_v2_3_2_merged_open.root");
+    Engine::getInstance()->slad->loadDefaultSlad();
+    Engine::getInstance()->setOutput("withCorrections.root");
 
-    Engine* e = new Engine(slad);
-
-    Module* module = new DemoHist();
-    e->addModule(module);
+    Module* energyCorrections = new EnergyCorrections();
+    Engine::getInstance()->addModule(energyCorrections);
     
-    e->run();
+    Module* energy = new CalculateEnergy();
+    Engine::getInstance()->addModule(energy);
+
+    Engine::getInstance()->run();
 }
+
+# ifndef __CINT__  // the following code will be invisible for the interpreter
+
+int main()
+{
+    Main();
+}
+
+# endif

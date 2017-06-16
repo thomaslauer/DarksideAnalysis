@@ -17,8 +17,8 @@ class DemoHist : public Module {
         testHistogram = new TH1F("testHistogram", "testing a histogram", 1000, -20, 20);
     }
     
-    void processEvent(Event * e) {
-        testHistogram->Fill(e->npulses);
+    void processEvent(Event& e) {
+        testHistogram->Fill(e.npulses);
     }
 
     void cleanup() {

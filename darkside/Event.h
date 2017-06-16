@@ -55,4 +55,7 @@ struct Event {
 	// from vetoes file
 	float veto_lsv_charge;
 	float veto_wt_charge;
+	
+	float correctedS1;
+	float correctedS2;
 };

@@ -6,19 +6,32 @@
 #include "Module.h"
 #include "SladLoader.h"
 #include "Event.h"
+#include "TStopwatch.h"
 
 using namespace std;
 
 class Engine {
+private:
+    static Engine* currentEngine;
+
+    Engine(TString filename) {
+        outputFilename = "output.root";
+        slad = new SladLoader(filename);
+    }
 public:
     vector<Module*> modules;
 
-    TString output = "output.root";
+    TFile* outputFile;
+    TString outputFilename;
 
     SladLoader* slad;
 
-    Engine(SladLoader* sladLoader) {
-        slad = sladLoader;
+    static void init(TString filename) {
+        currentEngine = new Engine(filename);
+    }
+
+    static Engine* getInstance() {
+        return currentEngine;
     }
 
     void addModule(Module* m) {
@@ -26,14 +39,18 @@ public:
     }
 
     void setOutput(TString newOutputFile) {
-        output = newOutputFile;
+        outputFilename = newOutputFile;
     }
 
     void run(int nevents = -1) {
+
+        TStopwatch* clock = new TStopwatch();
+	    clock->Start();
+
         Event e;
         TTree* events = slad->getFullTree();
 
-        TFile* outputFile = new TFile(output, "recreate");
+        outputFile = new TFile(outputFilename, "RECREATE");
         outputFile->cd();
 
         for(unsigned int i = 0; i < modules.size(); i++) {
@@ -55,15 +72,27 @@ public:
                 std::cout << "Processing event " << n << "/" << nevents << std::endl;
             }
 
+
             for(unsigned int i = 0; i < modules.size(); i++) {
-                modules[i]->processEvent(&e);
+                // apply corrections to event
+                modules[i]->processCorrections(e);
+            }
+
+            for(unsigned int i = 0; i < modules.size(); i++) {
+                // process the event
+                modules[i]->processEvent(e);
             }
         }
 
         for(unsigned int i = 0; i < modules.size(); i++) {
             modules[i]->cleanup();
         }
+        outputFile->cd();
         outputFile->Write();
         outputFile->Close();
+
+        std::cout << "Done!"<<" "<<clock->RealTime()<<" s."<<std::endl;
     }
 };
+
+Engine* Engine::currentEngine = NULL;
