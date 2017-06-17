@@ -21,8 +21,13 @@ class CalculateEnergy : public Module {
                 && (e.baseline_not_found == false)
                 && ((e.live_time + e.inhibit_time) >= 1.35e-3)
                 && (e.live_time < 1.);
+        
+        bool runNumberCuts = (e.run_id > 14463 && e.run_id < 14731)
+                || (e.run_id > 15442 && e.run_id < 15620)
+                || (e.run_id > 15954 && e.run_id < 16066);
+        
 
-        if(basicCuts && e.npulses > 3 && e.total_f90>0.15 && e.s1>60&&e.tdrift>5&&e.tdrift<380&&e.has_s3==false) {
+        if(basicCuts && !runNumberCuts && e.npulses > 3 && e.total_f90>0.15 && e.s1>60&&e.tdrift>5&&e.tdrift<380&&e.has_s3==false) {
             double energy = .0195*(e.correctedS1/0.154+e.correctedS2/35.34);
             henergy->Fill(energy);
         }
