@@ -22,12 +22,3 @@ void Main() {
 
     Engine::getInstance()->run();
 }
-
-# ifndef __CINT__  // the following code will be invisible for the interpreter
-
-int main()
-{
-    Main();
-}
-
-# endif
