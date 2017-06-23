@@ -6,19 +6,16 @@
 #include "darkside/Module.h"
 #include "darkside/EnergyCorrections.h"
 
-#include "DemoHist.h"
-#include "CalculateEnergy.h"
+#include "MuonRunNumbers/SaveEventFromSlad.h"
 
 void Main() {
     Engine::init("/mnt/c/Users/Thomas/Desktop/PhysicsCode/70daySample/UAr_70d_SLAD_v2_3_2_merged_open.root");
-    Engine::getInstance()->slad->loadDefaultSlad();
-    Engine::getInstance()->setOutput("withCorrections.root");
+    Engine* e = Engine::getInstance();
 
-    Module* energyCorrections = new EnergyCorrections();
-    Engine::getInstance()->addModule(energyCorrections);
-    
-    Module* energy = new CalculateEnergy();
-    Engine::getInstance()->addModule(energy);
+    e->slad->loadDefaultSlad();
+
+    e->addModule(new SaveEventFromSlad());
+
 
     Engine::getInstance()->run();
 }
