@@ -14,12 +14,13 @@ class Engine {
 private:
     static Engine* currentEngine;
 
+    int currentEvent;
+
     Engine(TString filename) {
         outputFilename = "output.root";
         slad = new SladLoader(filename);
+        currentEvent = 0;
     }
-
-    int currentEvent = 0;
 public:
     vector<Module*> modules;
 
