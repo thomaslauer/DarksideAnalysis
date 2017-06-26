@@ -86,7 +86,7 @@ class XYPlot : public Module {
 void SingleXYPlot() {
     //Engine::init("/mnt/c/Users/Thomas/Desktop/SLAD/UAr_500d_SLAD_v2_3_3_merged_v0.root");
     //Engine::init("/mnt/c/Users/Thomas/Desktop/slad_sixty.root");
-    Engine::init("/mnt/c/Users/Thomas/Desktop/fermi3/slad_fifty_t4.root");
+    Engine::init("~/SLAD/slad_fifty_t4.root");
     Engine* e = Engine::getInstance();
 
     e->slad->addSladFile("_allpulses.root", "pulse_info");
