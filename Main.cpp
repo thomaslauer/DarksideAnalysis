@@ -9,10 +9,14 @@
 #include "MuonRunNumbers/SaveEventFromSlad.h"
 
 void Main() {
-    Engine::init("/mnt/c/Users/Thomas/Desktop/PhysicsCode/70daySample/UAr_70d_SLAD_v2_3_2_merged_open.root");
+    Engine::init("~/SLAD/UAr_500d_SLAD_v2_3_3_merged_v0.root");
     Engine* e = Engine::getInstance();
 
-    e->slad->loadDefaultSlad();
+    e->slad->addSladFile("_allpulses.root", "pulse_info");
+    // e->slad->addSladFile("_masas_xy.root", "allpulses_xy");
+    // e->slad->addSladFile("_veto_cluster.root", "veto");
+    // e->slad->addSladFile("_xylocator_xy.root", "allpulses_xyl_xy");
+    // e->slad->addSladFile("_aww_xy.root", "allpulses_aww_xy");
 
     e->addModule(new SaveEventFromSlad());
 

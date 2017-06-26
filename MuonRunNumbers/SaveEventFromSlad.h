@@ -33,7 +33,7 @@ class SaveEventFromSlad : public Module {
         for(int i = 0; i < runNumbers.size(); i++) {
             if(e.run_id == runNumbers[i] && e.event_id == eventNumbers[i]) {
                 fileOutput << Engine::getInstance()->getCurrentSladEvent() 
-                        << " " << e.run_id << " " << e.event_id << " " << i << endl;
+                        << " " << e.run_id << " " << e.event_id << " " << e.npulses << " " << i << endl;
             }
         }
     }
