@@ -14,5 +14,6 @@ void testS2() {
 
     e->addModule(new S2Fitter());
 
-    e->runSingleEvent(41);
+    //e->runSingleEvent(4);
+    e->run();
 }

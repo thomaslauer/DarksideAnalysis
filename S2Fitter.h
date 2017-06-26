@@ -3,6 +3,7 @@
 
 #include "TGraph.h"
 #include "TF1.h"
+#include "TH2.h"
 #include "TCanvas.h"
 #include "TAxis.h"
 
@@ -14,10 +15,19 @@ using namespace std;
 
 class S2Fitter : public Module {
 
+    TH2* residualX_vs_tDrift;
     ofstream output;
+
+    bool draw = false;
+
+    TH1* xresiduals;
+    TH1* yresiduals;
 
     void init() {
         output.open("residualInfo.txt");
+        xresiduals = new TH1F("xresid", "x residuals", 32, -18, 18);
+        yresiduals = new TH1F("yresid", "y residuals", 32, -18, 18);
+
     }
     
     TF1* runFit(TGraph* g) {
@@ -30,11 +40,12 @@ class S2Fitter : public Module {
     }
 
     void processEvent(Event& e) {
-        int startPulse = 2;        
-
-        TCanvas* canvas = new TCanvas("can");
-        canvas->Divide(2, 1);
-
+        int startPulse = 2;   
+        TCanvas* canvas;
+        if(draw) {
+            canvas = new TCanvas("can");
+            canvas->Divide(2, 1);
+        }
         if(e.npulses > 4) {
             for(int droppedPulse = startPulse; droppedPulse < e.npulses; droppedPulse++) {
                 vector<double> x, y, tdrift;
@@ -59,16 +70,18 @@ class S2Fitter : public Module {
                         }
                     }
 
-                    canvas->cd(1);
+                    
                     TGraph* xvst = new TGraph(tdrift.size(), &tdrift[0], &x[0]);
                     TF1* f1 = runFit(xvst);
                     // (droppedPulse == startPulse) ? f1->Draw() : f1->Draw("same");
-
-                    if(droppedPulse == startPulse) {
-                        f1->Draw();
-                        f1->GetYaxis()->SetRangeUser(-18, 18);
-                    } else { 
-                        f1->Draw("same");
+                    if(draw) {
+                        canvas->cd(1);
+                        if(droppedPulse == startPulse) {
+                            f1->Draw();
+                            f1->GetYaxis()->SetRangeUser(-18, 18);
+                        } else { 
+                            f1->Draw("same");
+                        }
                     }
                     cout << "slope: " << f1->GetParameter(0) << " intercept: " << f1->GetParameter(1) << " residual: " 
                             << e.pulse_x_masa[droppedPulse] - f1->Eval(e.pulse_start_time[droppedPulse] - e.pulse_start_time[0]) 
@@ -78,21 +91,25 @@ class S2Fitter : public Module {
                             << e.pulse_x_masa[droppedPulse] << " "
                             << e.pulse_y_masa[droppedPulse] << " "
                             << f1->Eval(e.pulse_start_time[droppedPulse] - e.pulse_start_time[0]) << " ";
-
-                    canvas->cd(2);
+                    xresiduals->Fill((f1->Eval(e.pulse_start_time[droppedPulse] - e.pulse_start_time[0])) - e.pulse_x_masa[droppedPulse]);
+                    
                     TGraph* yvst = new TGraph(tdrift.size(), &tdrift[0], &y[0]);
                     TF1* f2 = runFit(yvst);
-                    if(droppedPulse == startPulse) {
-                        f2->Draw();
-                        f2->GetYaxis()->SetRangeUser(-18, 18);
-                    } else { 
-                        f2->Draw("same");
-                    }                
+                    if(draw) {
+                        canvas->cd(2);
+                        if(droppedPulse == startPulse) {
+                            f2->Draw();
+                            f2->GetYaxis()->SetRangeUser(-18, 18);
+                        } else { 
+                            f2->Draw("same");
+                        }             
+                    }   
                     cout << "slope: " << f2->GetParameter(0) << " intercept: " << f2->GetParameter(1) << " residual: " 
                             << e.pulse_x_masa[droppedPulse] - f2->Eval(e.pulse_start_time[droppedPulse] - e.pulse_start_time[0]) 
                             << endl;
 
                     output << f2->Eval(e.pulse_start_time[droppedPulse] - e.pulse_start_time[0]) << endl;
+                    yresiduals->Fill((f2->Eval(e.pulse_start_time[droppedPulse] - e.pulse_start_time[0])) - e.pulse_y_masa[droppedPulse]);
                 }
             }
         }

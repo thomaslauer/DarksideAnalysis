@@ -96,5 +96,5 @@ void SingleXYPlot() {
 
     e->addModule(new XYPlot());
 
-    e->runSingleEvent(41);
+    e->runSingleEvent(4);
 }
