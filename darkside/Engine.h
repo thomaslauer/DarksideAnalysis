@@ -10,6 +10,12 @@
 
 using namespace std;
 
+/*
+
+NOTE: Only run compiled
+
+*/
+
 class Engine {
 private:
     static Engine* currentEngine;
