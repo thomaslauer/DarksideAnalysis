@@ -25,7 +25,7 @@ class S2Fit : public Module {
     TH1* yresiduals;
 
     void init() {
-        output.open("residualInfo.txt");
+        output.open("output/s2FitInfo.txt");
         xresiduals = new TH1F("xresid", "x residuals", 100, -18, 18);
         yresiduals = new TH1F("yresid", "y residuals", 100, -18, 18);
 
@@ -135,7 +135,7 @@ void S2Fitter() {
 
     e->addModule(new S2Fit());
 
-    e->setOutput("s2fitting.root");
+    e->setOutput("output/s2fitting.root");
 
     // e->runSingleEvent(4);
     e->run();
