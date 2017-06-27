@@ -51,7 +51,7 @@ class XYPlot : public Module {
         xvst->GetYaxis()->SetTitle("X position");
         xvst->GetXaxis()->SetTitle("drift time");
         xvst->GetYaxis()->SetRangeUser(-18, 18);
-        xvst->Fit("pol1");
+        //xvst->Fit("pol1");
         xvst->Draw("A*E");
 
         canvas->cd(2);
@@ -62,7 +62,7 @@ class XYPlot : public Module {
         yvst->GetYaxis()->SetTitle("Y position");
         yvst->GetXaxis()->SetTitle("drift time");
         yvst->GetYaxis()->SetRangeUser(-18, 18);
-        yvst->Fit("pol1");
+        //yvst->Fit("pol1");
         yvst->Draw("A*E");
         
         canvas->cd(3);
