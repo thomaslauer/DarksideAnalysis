@@ -20,7 +20,7 @@ class S2FitV2 : public Module {
 
     ofstream output;
 
-    bool draw = false;
+    bool draw = true;
     bool firstDraw = true;
 
     double residualThreshold = 6;
@@ -47,7 +47,7 @@ class S2FitV2 : public Module {
         TF1* fit = new TF1("linearFit", "[0]*x+[1]", 0, 450);
         fit->SetParameter(0, 0);
         fit->SetParameter(0, 0);
-        g->Fit(fit);
+        g->Fit(fit, "q");
 
         return fit;
     }
