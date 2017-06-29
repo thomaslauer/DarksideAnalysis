@@ -79,7 +79,9 @@ public:
             events->GetEntry(n);
 
             if (n%100000==0) {
-                std::cout << "Processing event " << n << "/" << nevents << std::endl;
+                cout << "Processing event " << n << "/" << nevents;
+                int percent = ((float)n / (float)nevents) * 100;
+                cout << " " << percent << "%" << endl;
             }
 
 
