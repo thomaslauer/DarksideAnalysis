@@ -12,17 +12,11 @@ class PlotNPEvsPulse : public Module {
     TH1* pulseTime;
     TH1* pulseNPE;
     TH2* npevstime;
-    TH1* pulseTime3;
-    TH1* pulseNPE3;
-    TH2* npevstime3;
 
     void init() {
-        pulseTime = new TH1F("pulseTime", "pulseTime", 380, 0, 380);
+        pulseTime = new TH1F("pulseTime", "pulseDuration", 380, 0, 380);
         pulseNPE = new TH1F("pulseNPE", "pulseNPE", 100, 0, 1000);
-        npevstime = new TH2F("npevstime", "npevstime", 380, 0, 380, 1000, 0, 100000);
-        pulseTime3 = new TH1F("pulseTime3", "pulseTime", 380, 0, 380);
-        pulseNPE3 = new TH1F("pulseNPE3", "pulseNPE", 100, 0, 1000);
-        npevstime3 = new TH2F("npevstime3", "npevstime", 380, 0, 380, 1000, 0, 100000);
+        npevstime = new TH2F("npevstime", "npevstime", 150, 0, 380, 500, 0, 100000);
     }
 
     void processEvent(Event& e) {
@@ -31,16 +25,21 @@ class PlotNPEvsPulse : public Module {
         //     pulseTime->Fill(e.pulse_end_time[i] - e.pulse_start_time[i]);
         // }
 
-        if(e.npulses == 2) {
-            pulseNPE->Fill(e.pulse_total_npe[1]);
-            pulseTime->Fill(e.pulse_end_time[1] - e.pulse_start_time[1]);
-            npevstime->Fill(e.pulse_end_time[1] - e.pulse_start_time[1], e.pulse_total_npe[1]);
-        }
+        bool runNumberCuts = (e.run_id > 14463 && e.run_id < 14731)
+                || (e.run_id > 15442 && e.run_id < 15620)
+                || (e.run_id > 15954 && e.run_id < 16066);
 
-        if(e.npulses == 3) {
-            pulseNPE3->Fill(e.pulse_total_npe[2]);
-            pulseTime3->Fill(e.pulse_end_time[2] - e.pulse_start_time[2]);
-            npevstime3->Fill(e.pulse_end_time[2] - e.pulse_start_time[2], e.pulse_total_npe[2]);
+        bool basicCuts = (e.nchannels == 38)
+                && (e.baseline_not_found == false)
+                && ((e.live_time + e.inhibit_time) >= 1.35e-3)
+                && (e.live_time < 1.)
+                && !runNumberCuts
+                && e.total_f90>0.15 && e.s1>60&&e.tdrift>5&&e.tdrift<380&&e.has_s3==false;
+
+        if(basicCuts && e.npulses == 2) {
+            pulseNPE->Fill(e.pulse_total_npe[0]);
+            pulseTime->Fill(e.pulse_end_time[0] - e.pulse_start_time[0]);
+            npevstime->Fill(e.pulse_end_time[0] - e.pulse_start_time[0], e.pulse_total_npe[0]);
         }
     }
 
@@ -62,7 +61,7 @@ void S2NPE() {
     //e->addModule(new S2Fit());
     e->addModule(new PlotNPEvsPulse());
 
-    e->setOutput("output/output.root");
+    e->setOutput("output/outputs1.root");
 
     //e->runSingleEvent(4);
     e->run();
