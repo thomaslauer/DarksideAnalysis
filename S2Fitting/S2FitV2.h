@@ -20,7 +20,7 @@ class S2FitV2 : public Module {
 
     ofstream output;
 
-    bool draw = true;
+    bool draw = false;
     bool firstDraw = true;
 
     double residualThreshold = 6;
@@ -29,6 +29,9 @@ class S2FitV2 : public Module {
     TH1* yresiduals;
     TH2* yvsx;
 
+    TH2* residvsnpe;
+    TH1* residovernpe;    
+
     TCanvas* canvas;
 
     void init() {
@@ -36,6 +39,9 @@ class S2FitV2 : public Module {
         xresiduals = new TH1F("xresid", "xresiduals", 25, -18, 18);
         yresiduals = new TH1F("yresid", "yresiduals", 25, -18, 18);
         yvsx = new TH2F("yvsx", "yvsx", 25, -18, 18, 25, -18, 18);
+
+        residvsnpe = new TH2F("residvsnpe", "Residual vs NPE", 25, 0, 1000, 15, 0, 18);
+        residovernpe = new TH1F("residovernpe", "Residual over NPE", 500, 0, .01);
 
         if(draw) {
             canvas = new TCanvas("can");
@@ -109,11 +115,11 @@ class S2FitV2 : public Module {
                             && (e.pulse_y_masa[testPulse] < 20);
                 
                 if(goodTestXY) {
-
+                    
                     for(int i = 0; i < pulsesToUseForFitting.size(); i++) {
                         if(pulsesToUseForFitting[i] != testPulse) {
 
-                            cout << i << " " << e.pulse_x_masa[pulsesToUseForFitting[i]] << " " << e.pulse_y_masa[pulsesToUseForFitting[i]] << endl;
+                            //cout << i << " " << e.pulse_x_masa[pulsesToUseForFitting[i]] << " " << e.pulse_y_masa[pulsesToUseForFitting[i]] << endl;
 
                             testX.push_back(e.pulse_x_masa[pulsesToUseForFitting[i]]);
                             testY.push_back(e.pulse_y_masa[pulsesToUseForFitting[i]]);
@@ -128,9 +134,13 @@ class S2FitV2 : public Module {
                         double xresidValue = (fitx->Eval(e.pulse_start_time[testPulse] - e.pulse_start_time[0])) - e.pulse_x_masa[testPulse];
                         double yresidValue = (fity->Eval(e.pulse_start_time[testPulse] - e.pulse_start_time[0])) - e.pulse_y_masa[testPulse];
 
+                        double rResidValue = sqrt(xresidValue * xresidValue + yresidValue * yresidValue);
+
                         xresiduals->Fill(xresidValue);
                         yresiduals->Fill(yresidValue);
                         yvsx->Fill(xresidValue, yresidValue);
+                        residvsnpe->Fill(e.pulse_total_npe[testPulse], rResidValue);
+                        residovernpe->Fill(rResidValue/e.pulse_total_npe[testPulse]);
                     }
 
                     if(draw) {
