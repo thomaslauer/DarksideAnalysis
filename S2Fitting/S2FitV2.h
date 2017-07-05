@@ -30,7 +30,10 @@ class S2FitV2 : public Module {
     TH2* yvsx;
 
     TH2* residvsnpe;
+    TH2* residvss1;
+    TH2* residvstdrift;
     TH1* residovernpe;    
+    TH1* npeoverresid;    
 
     TCanvas* canvas;
 
@@ -40,8 +43,11 @@ class S2FitV2 : public Module {
         yresiduals = new TH1F("yresid", "yresiduals", 25, -18, 18);
         yvsx = new TH2F("yvsx", "yvsx", 25, -18, 18, 25, -18, 18);
 
-        residvsnpe = new TH2F("residvsnpe", "Residual vs NPE", 25, 0, 1000, 15, 0, 18);
+        residvsnpe = new TH2F("residvsnpe", "Residual vs NPE", 50, 0, 100000, 15, 0, 18);
+        residvss1 = new TH2F("residvss1", "Residual vs s1", 100, 0, 100000, 15, 0, 18);
+        residvstdrift = new TH2F("residvstdrift", "Residual vs tdrift", 18, 0, 450, 15, 0, 18);
         residovernpe = new TH1F("residovernpe", "Residual over NPE", 500, 0, .01);
+        npeoverresid = new TH1F("npeoverresid", "NPE/Residual", 500, 0, 10000);
 
         if(draw) {
             canvas = new TCanvas("can");
@@ -140,7 +146,10 @@ class S2FitV2 : public Module {
                         yresiduals->Fill(yresidValue);
                         yvsx->Fill(xresidValue, yresidValue);
                         residvsnpe->Fill(e.pulse_total_npe[testPulse], rResidValue);
+                        residvss1->Fill(e.pulse_total_npe[0], rResidValue);
+                        residvstdrift->Fill(e.pulse_start_time[testPulse] - e.pulse_start_time[0], rResidValue);
                         residovernpe->Fill(rResidValue/e.pulse_total_npe[testPulse]);
+                        if(rResidValue > 0) npeoverresid->Fill(e.pulse_total_npe[testPulse]/rResidValue);
                     }
 
                     if(draw) {

@@ -25,11 +25,23 @@ class S2Fit : public Module {
     TH1* yresiduals;
     TH2* yvsx;
 
+    TH2* residvsnpe;
+    TH2* residvss1;
+    TH2* residvstdrift;
+    TH1* residovernpe;    
+    TH1* npeoverresid;
+
     void init() {
         output.open("output/s2FitInfo.txt");
-        xresiduals = new TH1F("xresid", "x residuals", 25, -18, 18);
-        yresiduals = new TH1F("yresid", "y residuals", 25, -18, 18);
+        xresiduals = new TH1F("xresid", "xresiduals", 25, -18, 18);
+        yresiduals = new TH1F("yresid", "yresiduals", 25, -18, 18);
         yvsx = new TH2F("yvsx", "yvsx", 25, -18, 18, 25, -18, 18);
+
+        residvsnpe = new TH2F("residvsnpe", "Residual vs NPE", 50, 0, 100000, 15, 0, 18);
+        residvss1 = new TH2F("residvss1", "Residual vs s1", 150, 0, 100000, 15, 0, 18);
+        residvstdrift = new TH2F("residvstdrift", "Residual vs tdrift", 18, 0, 450, 15, 0, 18);
+        residovernpe = new TH1F("residovernpe", "Residual over NPE", 500, 0, .01);
+        npeoverresid = new TH1F("npeoverresid", "NPE/Residual", 500, 0, 10000);
 
     }
     
@@ -50,14 +62,14 @@ class S2Fit : public Module {
             canvas->Divide(2, 1);
         }
         if(e.npulses > 4) {
-            for(int droppedPulse = startPulse; droppedPulse < e.npulses; droppedPulse++) {
+            for(int testPulse = startPulse; testPulse < e.npulses; testPulse++) {
                 vector<double> x, y, tdrift; // vectors to hold fit data
                 vector<double> xNoDrop, yNoDrop, tdriftNoDrop; // vectors to hold all pulses WITHOUT dropping this one
 
-                bool droppedGoodXY = (e.pulse_x_masa[droppedPulse] > -20)
-                            && (e.pulse_x_masa[droppedPulse] < 20)
-                            && (e.pulse_y_masa[droppedPulse] > -20)
-                            && (e.pulse_y_masa[droppedPulse] < 20);
+                bool droppedGoodXY = (e.pulse_x_masa[testPulse] > -20)
+                            && (e.pulse_x_masa[testPulse] < 20)
+                            && (e.pulse_y_masa[testPulse] > -20)
+                            && (e.pulse_y_masa[testPulse] < 20);
                 
                 if(droppedGoodXY) { 
                     for(int currentPulse = startPulse; currentPulse < e.npulses; currentPulse++) {
@@ -66,7 +78,7 @@ class S2Fit : public Module {
                                     && (e.pulse_y_masa[currentPulse] > -20)
                                     && (e.pulse_y_masa[currentPulse] < 20);
 
-                        if((currentPulse != droppedPulse) && currentGoodXY) {
+                        if((currentPulse != testPulse) && currentGoodXY) {
                             x.push_back(e.pulse_x_masa[currentPulse]);
                             y.push_back(e.pulse_y_masa[currentPulse]);
                             tdrift.push_back(e.pulse_start_time[currentPulse] - e.pulse_start_time[0]);
@@ -80,42 +92,49 @@ class S2Fit : public Module {
                     if(tdrift.size() > 3) { // make sure enough pulses reconstructed to make a fit
 
                         TGraph* xvst = new TGraph(tdrift.size(), &tdrift[0], &x[0]);
-                        TF1* f1 = runFit(xvst);
+                        TF1* fitx = runFit(xvst);
                         if(draw) {
                             canvas->cd(1);
-                            if(droppedPulse == startPulse) {
-                                f1->Draw();
-                                f1->GetYaxis()->SetRangeUser(-18, 18);
+                            if(testPulse == startPulse) {
+                                fitx->Draw();
+                                fitx->GetYaxis()->SetRangeUser(-18, 18);
                             } else { 
-                                f1->Draw("same");
+                                fitx->Draw("same");
                             }
                         }
 
-                        output << e.pulse_start_time[droppedPulse] - e.pulse_start_time[0] << " "
-                                << e.pulse_x_masa[droppedPulse] << " "
-                                << e.pulse_y_masa[droppedPulse] << " "
-                                << f1->Eval(e.pulse_start_time[droppedPulse] - e.pulse_start_time[0]) << " ";
-                        xresiduals->Fill((f1->Eval(e.pulse_start_time[droppedPulse] - e.pulse_start_time[0])) - e.pulse_x_masa[droppedPulse]);
-                        double xresidValue = (f1->Eval(e.pulse_start_time[droppedPulse] - e.pulse_start_time[0])) - e.pulse_x_masa[droppedPulse];
+                        output << e.pulse_start_time[testPulse] - e.pulse_start_time[0] << " "
+                                << e.pulse_x_masa[testPulse] << " "
+                                << e.pulse_y_masa[testPulse] << " "
+                                << fitx->Eval(e.pulse_start_time[testPulse] - e.pulse_start_time[0]) << " ";
+                        xresiduals->Fill((fitx->Eval(e.pulse_start_time[testPulse] - e.pulse_start_time[0])) - e.pulse_x_masa[testPulse]);
+                        //double xresidValue = (fitx->Eval(e.pulse_start_time[testPulse] - e.pulse_start_time[0])) - e.pulse_x_masa[testPulse];
                         // start fitting y vs tdrift
                         TGraph* yvst = new TGraph(tdrift.size(), &tdrift[0], &y[0]);
-                        TF1* f2 = runFit(yvst);
+                        TF1* fity = runFit(yvst);
                         if(draw) {
                             canvas->cd(2);
-                            if(droppedPulse == startPulse) {
-                                f2->Draw();
-                                f2->GetYaxis()->SetRangeUser(-18, 18);
+                            if(testPulse == startPulse) {
+                                fity->Draw();
+                                fity->GetYaxis()->SetRangeUser(-18, 18);
                             } else { 
-                                f2->Draw("same");
+                                fity->Draw("same");
                             }             
                         }
 
-                        double yresidValue = (f2->Eval(e.pulse_start_time[droppedPulse] - e.pulse_start_time[0])) - e.pulse_y_masa[droppedPulse];
+                        double xresidValue = (fitx->Eval(e.pulse_start_time[testPulse] - e.pulse_start_time[0])) - e.pulse_x_masa[testPulse];
+                        double yresidValue = (fity->Eval(e.pulse_start_time[testPulse] - e.pulse_start_time[0])) - e.pulse_y_masa[testPulse];
 
+                        double rResidValue = sqrt(xresidValue * xresidValue + yresidValue * yresidValue);
+
+                        xresiduals->Fill(xresidValue);
+                        yresiduals->Fill(yresidValue);
                         yvsx->Fill(xresidValue, yresidValue);
-
-                        output << f2->Eval(e.pulse_start_time[droppedPulse] - e.pulse_start_time[0]) << endl;
-                        yresiduals->Fill((f2->Eval(e.pulse_start_time[droppedPulse] - e.pulse_start_time[0])) - e.pulse_y_masa[droppedPulse]);
+                        residvsnpe->Fill(e.pulse_total_npe[testPulse], rResidValue);
+                        residvss1->Fill(e.pulse_total_npe[0], rResidValue);
+                        residvstdrift->Fill(e.pulse_start_time[testPulse] - e.pulse_start_time[0], rResidValue);
+                        residovernpe->Fill(rResidValue/e.pulse_total_npe[testPulse]);
+                        if(rResidValue > 0) npeoverresid->Fill(e.pulse_total_npe[testPulse]/rResidValue);
                     }
                 }
             }
