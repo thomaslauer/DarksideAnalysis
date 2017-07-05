@@ -35,7 +35,7 @@ public:
     }
 
     TH2D* openHS2Corr() {
-        TString fname = "S2CorrectionFactor_Kr_pS2VsXY_Kr_Jason_Masa.root";
+        TString fname = "darkside/S2CorrectionFactor_Kr_pS2VsXY_Kr_Jason_Masa.root";
         TFile *g = (TFile*)gROOT->GetListOfFiles()->FindObject(fname.Data());
         if (!g || !g->IsOpen()) {
             g = new TFile(fname.Data(), "READ");
