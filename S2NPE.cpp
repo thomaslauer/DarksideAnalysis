@@ -10,13 +10,24 @@ using namespace std;
 class PlotNPEvsPulse : public Module {
     
     TH1* pulseTime;
+
+    TH2* pulseStartTimes;
+    TH2* pulseEndTimes;
+
+    TH2* npevspulse;
+
     TH1* pulseNPE;
     TH2* npevstime;
 
     void init() {
         pulseTime = new TH1F("pulseTime", "pulseDuration", 380, 0, 380);
-        pulseNPE = new TH1F("pulseNPE", "pulseNPE", 100, 0, 1000);
+        pulseNPE = new TH1F("pulseNPE", "pulseNPE", 10000, 0, 100000);
         npevstime = new TH2F("npevstime", "npevstime", 150, 0, 380, 500, 0, 100000);
+
+        npevspulse = new TH2F("npevspulse", "NPE vs Pulse", 18, 0, 18, 25, 100, 10000);
+
+        pulseStartTimes = new TH2F("pulseStartTimes", "Pulse Starts", 100, 0, 450, 20, 0, 20);
+        pulseEndTimes = new TH2F("pulseEndTimes", "Pulse Ends", 100, 0, 450, 20, 0, 20);
     }
 
     void processEvent(Event& e) {
@@ -36,10 +47,18 @@ class PlotNPEvsPulse : public Module {
                 && !runNumberCuts
                 && e.total_f90>0.15 && e.s1>60&&e.tdrift>5&&e.tdrift<380&&e.has_s3==false;
 
-        if(basicCuts && e.npulses == 2) {
-            pulseNPE->Fill(e.pulse_total_npe[0]);
-            pulseTime->Fill(e.pulse_end_time[0] - e.pulse_start_time[0]);
-            npevstime->Fill(e.pulse_end_time[0] - e.pulse_start_time[0], e.pulse_total_npe[0]);
+        if(basicCuts) {
+            
+
+            for(int i = 1; i < e.npulses; i++) {
+                pulseStartTimes->Fill(e.pulse_start_time[i], i);
+                pulseEndTimes->Fill(e.pulse_end_time[i], i);
+                npevspulse->Fill(i, e.pulse_total_npe[i]);
+                pulseNPE->Fill(e.pulse_total_npe[i]);
+            }
+
+            pulseTime->Fill(e.pulse_end_time[1] - e.pulse_start_time[1]);
+            npevstime->Fill(e.pulse_end_time[1] - e.pulse_start_time[1], e.pulse_total_npe[1]);
         }
     }
 
@@ -50,6 +69,8 @@ class PlotNPEvsPulse : public Module {
 void S2NPE() {
     // Engine::init("~/SLAD/slad_fifty_t4.root");
     Engine::init("~/SLAD/UAr_500d_SLAD_v2_3_3_merged_v0.root");
+    // Engine::init("~/SLAD/slad_350_mu.root");
+
     Engine* e = Engine::getInstance();
 
     e->slad->addSladFile("_allpulses.root", "pulse_info");
@@ -61,7 +82,7 @@ void S2NPE() {
     //e->addModule(new S2Fit());
     e->addModule(new PlotNPEvsPulse());
 
-    e->setOutput("output/outputs1.root");
+    e->setOutput("output/500day.root");
 
     //e->runSingleEvent(4);
     e->run();
