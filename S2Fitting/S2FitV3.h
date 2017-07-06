@@ -16,7 +16,7 @@
 
 using namespace std;
 
-class S2FitV2 : public Module {
+class S2FitV3 : public Module {
 
     ofstream output;
 
@@ -34,6 +34,7 @@ class S2FitV2 : public Module {
     TH2* residvstdrift;
     TH1* residovernpe;    
     TH1* npeoverresid;    
+    TH1* npe;    
 
     TCanvas* canvas;
 
@@ -43,11 +44,12 @@ class S2FitV2 : public Module {
         yresiduals = new TH1F("yresid", "yresiduals", 50, -18, 18);
         yvsx = new TH2F("yvsx", "yvsx", 50, -18, 18, 50, -18, 18);
 
-        residvsnpe = new TH2F("residvsnpe", "Residual vs NPE", 50, 0, 100000, 15, 0, 18);
+        residvsnpe = new TH2F("residvsnpe", "Residual vs NPE", 50, 0, 200, 15, 0, 18);
         residvss1 = new TH2F("residvss1", "Residual vs s1", 50, 0, 100000, 15, 0, 18);
         residvstdrift = new TH2F("residvstdrift", "Residual vs tdrift", 18, 0, 450, 15, 0, 18);
         residovernpe = new TH1F("residovernpe", "Residual/NPE", 500, 0, .01);
         npeoverresid = new TH1F("npeoverresid", "NPE/Residual", 500, 0, 10000);
+        npe = new TH1F("npe", "NPE/Residual", 500, 0, 10000);
 
         if(draw) {
             canvas = new TCanvas("can");
@@ -71,25 +73,7 @@ class S2FitV2 : public Module {
 
         if(e.npulses > 4) {
 
-            // vectors for the full event
-            vector<double> fullX, fullY, fullTDrift;
-
-            // select pulses of whole event that reconstruct well
-            for(int i = startPulse; i < e.npulses; i++) {
-                bool goodPulse = (e.pulse_x_masa[i] > -20)
-                            && (e.pulse_x_masa[i] < 20)
-                            && (e.pulse_y_masa[i] > -20)
-                            && (e.pulse_y_masa[i] < 20);
-                if(goodPulse) {
-                    fullX.push_back(e.pulse_x_masa[i]);
-                    fullY.push_back(e.pulse_y_masa[i]);
-                    fullTDrift.push_back(e.pulse_start_time[i] - e.pulse_start_time[0]);
-                }
-            }
-
-            // Runs fits on whole dataset. These are used to see which points should be ommited from later tests 
-            TF1* xFullFit = runFit(new TGraph(fullTDrift.size(), &fullTDrift[0], &fullX[0]));
-            TF1* yFullFit = runFit(new TGraph(fullTDrift.size(), &fullTDrift[0], &fullY[0]));
+            
 
             vector<int> pulsesToUseForFitting; // a vector of pulses we can use for making fits later
 
@@ -100,11 +84,7 @@ class S2FitV2 : public Module {
                             && (e.pulse_y_masa[i] > -20)
                             && (e.pulse_y_masa[i] < 20);
                 if(goodPulse) {
-                    double xresid = abs(e.pulse_x_masa[i] - xFullFit->Eval(e.pulse_start_time[i] - e.pulse_start_time[0]));
-                    double yresid = abs(e.pulse_y_masa[i] - yFullFit->Eval(e.pulse_start_time[i] - e.pulse_start_time[0]));
-
-                    // if it's relatively close
-                    if(xresid < residualThreshold && yresid < residualThreshold) {
+                    if(e.pulse_total_npe[i] > 50) {
                         pulsesToUseForFitting.push_back(i);
                     }
                 }
@@ -149,7 +129,8 @@ class S2FitV2 : public Module {
                         residvss1->Fill(e.pulse_total_npe[0], rResidValue);
                         residvstdrift->Fill(e.pulse_start_time[testPulse] - e.pulse_start_time[0], rResidValue);
                         residovernpe->Fill(rResidValue/e.pulse_total_npe[testPulse]);
-                        if(rResidValue > 0) npeoverresid->Fill(e.pulse_total_npe[testPulse]/rResidValue);
+                        if(rResidValue > 5) npeoverresid->Fill(e.pulse_total_npe[testPulse]);
+                        npe->Fill(e.pulse_total_npe[testPulse]);
                     }
 
                     if(draw) {

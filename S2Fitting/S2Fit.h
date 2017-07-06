@@ -35,12 +35,12 @@ class S2Fit : public Module {
         output.open("output/s2FitInfo.txt");
         xresiduals = new TH1F("xresid", "xresiduals", 25, -18, 18);
         yresiduals = new TH1F("yresid", "yresiduals", 25, -18, 18);
-        yvsx = new TH2F("yvsx", "yvsx", 25, -18, 18, 25, -18, 18);
+        yvsx = new TH2F("yvsx", "yvsx", 50, -18, 18, 50, -18, 18);
 
-        residvsnpe = new TH2F("residvsnpe", "Residual vs NPE", 50, 0, 100000, 15, 0, 18);
+        residvsnpe = new TH2F("residvsnpe", "Residual vs NPE", 150, 0, 100000, 15, 0, 18);
         residvss1 = new TH2F("residvss1", "Residual vs s1", 150, 0, 100000, 15, 0, 18);
         residvstdrift = new TH2F("residvstdrift", "Residual vs tdrift", 18, 0, 450, 15, 0, 18);
-        residovernpe = new TH1F("residovernpe", "Residual over NPE", 500, 0, .01);
+        residovernpe = new TH1F("residovernpe", "Residual/NPE", 500, 0, .01);
         npeoverresid = new TH1F("npeoverresid", "NPE/Residual", 500, 0, 10000);
 
     }
