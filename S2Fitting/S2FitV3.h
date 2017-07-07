@@ -30,6 +30,7 @@ class S2FitV3 : public Module {
     TH2* yvsx;
 
     TH2* residvsnpe;
+    TH2* residvsradius;
     TH2* residvss1;
     TH2* residvstdrift;
     TH1* residovernpe;    
@@ -45,6 +46,7 @@ class S2FitV3 : public Module {
         yvsx = new TH2F("yvsx", "yvsx", 50, -18, 18, 50, -18, 18);
 
         residvsnpe = new TH2F("residvsnpe", "Residual vs NPE", 50, 0, 200, 15, 0, 18);
+        residvsradius = new TH2F("residvsradius", "Residual vs Radius", 15, 0, 20, 15, 0, 20);
         residvss1 = new TH2F("residvss1", "Residual vs s1", 50, 0, 100000, 15, 0, 18);
         residvstdrift = new TH2F("residvstdrift", "Residual vs tdrift", 18, 0, 450, 15, 0, 18);
         residovernpe = new TH1F("residovernpe", "Residual/NPE", 500, 0, .01);
@@ -68,13 +70,7 @@ class S2FitV3 : public Module {
 
     void processEvent(Event& e) {
         int startPulse = 1;
-        
-        
-
         if(e.npulses > 4) {
-
-            
-
             vector<int> pulsesToUseForFitting; // a vector of pulses we can use for making fits later
 
             // Selects pulses that we can use for more in depth analysis
@@ -126,6 +122,7 @@ class S2FitV3 : public Module {
                         yresiduals->Fill(yresidValue);
                         yvsx->Fill(xresidValue, yresidValue);
                         residvsnpe->Fill(e.pulse_total_npe[testPulse], rResidValue);
+                        residvsradius->Fill(e.pulse_r_masa[testPulse], rResidValue);
                         residvss1->Fill(e.pulse_total_npe[0], rResidValue);
                         residvstdrift->Fill(e.pulse_start_time[testPulse] - e.pulse_start_time[0], rResidValue);
                         residovernpe->Fill(rResidValue/e.pulse_total_npe[testPulse]);
