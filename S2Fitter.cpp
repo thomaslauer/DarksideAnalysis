@@ -7,7 +7,8 @@
 #include "S2Fitting/S2FitV3.h"
 
 void S2Fitter() {
-    Engine::init("~/SLAD/slad_350_mu.root");
+    Engine::init("~/SLAD/slad_1300.root");
+    // Engine::init("~/SLAD/slad_350_mu.root");
     Engine* e = Engine::getInstance();
 
     e->slad->addSladFile("_allpulses.root", "pulse_info");
@@ -16,10 +17,10 @@ void S2Fitter() {
     // e->slad->addSladFile("_xylocator_xy.root", "allpulses_xyl_xy");
     // e->slad->addSladFile("_aww_xy.root", "allpulses_aww_xy");
 
-    e->addModule(new S2FitV3());
-    //e->addModule(new S2FitV2());
+    e->addModule(new S2FitV3("masa"));
+    // e->addModule(new S2FitV2());
 
-    e->setOutput("output/outputv3.root");
+    e->setOutput("output/outputv3_1300.root");
 
     //e->runSingleEvent(4);
     e->run();

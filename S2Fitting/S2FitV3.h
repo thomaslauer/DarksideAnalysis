@@ -13,11 +13,12 @@
 #include <vector>
 #include <stdlib.h>
 #include <algorithm>
+#include <string>
 
 using namespace std;
 
 class S2FitV3 : public Module {
-
+public:
     ofstream output;
 
     bool draw = false;
@@ -27,6 +28,7 @@ class S2FitV3 : public Module {
 
     TH1* xresiduals;
     TH1* yresiduals;
+    TH1* rresiduals;
     TH2* yvsx;
 
     TH2* residvsnpe;
@@ -37,21 +39,30 @@ class S2FitV3 : public Module {
     TH1* npeoverresid;    
     TH1* npe;    
 
-    TCanvas* canvas;
+    TH1* npulsesFit;
 
+    TCanvas* canvas;
+    string suffix;
+
+    S2FitV3(string histogramSuffix) {
+        suffix = histogramSuffix;
+    }
     void init() {
         output.open("output/s2FitInfo.txt");
-        xresiduals = new TH1F("xresid", "xresiduals", 50, -18, 18);
-        yresiduals = new TH1F("yresid", "yresiduals", 50, -18, 18);
-        yvsx = new TH2F("yvsx", "yvsx", 50, -18, 18, 50, -18, 18);
+        xresiduals = new TH1F(("xresid" + suffix).c_str(), "xresiduals", 100, -20, 20);
+        yresiduals = new TH1F(("yresid" + suffix).c_str(), "yresiduals", 100, -20, 20);
+        rresiduals = new TH1F(("rresid" + suffix).c_str(), "yresiduals", 100, -20, 20);
+        yvsx = new TH2F(("yvsx" + suffix).c_str(), "yvsx", 200, -20, 20, 200, -20, 20);
 
-        residvsnpe = new TH2F("residvsnpe", "Residual vs NPE", 50, 0, 200, 15, 0, 18);
-        residvsradius = new TH2F("residvsradius", "Residual vs Radius", 15, 0, 20, 15, 0, 20);
-        residvss1 = new TH2F("residvss1", "Residual vs s1", 50, 0, 100000, 15, 0, 18);
-        residvstdrift = new TH2F("residvstdrift", "Residual vs tdrift", 18, 0, 450, 15, 0, 18);
-        residovernpe = new TH1F("residovernpe", "Residual/NPE", 500, 0, .01);
-        npeoverresid = new TH1F("npeoverresid", "NPE/Residual", 500, 0, 10000);
-        npe = new TH1F("npe", "NPE/Residual", 500, 0, 10000);
+        residvsnpe = new TH2F(("residvsnpe" + suffix).c_str(), "Residual vs NPE", 100, 0, 200, 50, -20, 20);
+        residvsradius = new TH2F(("residvsradius" + suffix).c_str(), "Residual vs Radius", 15, 0, 20, 50, -20, 20);
+        residvss1 = new TH2F(("residvss1" + suffix).c_str(), "Residual vs s1", 50, 0, 100000, 50, -20, 20);
+        residvstdrift = new TH2F(("residvstdrift" + suffix).c_str(), "Residual vs tdrift", 20, 0, 450, 50, -20, 20);
+        residovernpe = new TH1F(("residovernpe" + suffix).c_str(), "Residual/NPE", 500, 0, .01);
+        npeoverresid = new TH1F(("npeoverresid" + suffix).c_str(), "NPE/Residual", 500, 0, 10000);
+        npe = new TH1F(("npe" + suffix).c_str(), "NPE/Residual", 500, 0, 10000);
+
+        npulsesFit = new TH1F("npulsesfit", "npulses that fit", 20, 0, 20);
 
         if(draw) {
             canvas = new TCanvas("can");
@@ -64,7 +75,6 @@ class S2FitV3 : public Module {
         fit->SetParameter(0, 0);
         fit->SetParameter(0, 0);
         g->Fit(fit, "q");
-
         return fit;
     }
 
@@ -109,17 +119,19 @@ class S2FitV3 : public Module {
                         }
                     }
 
-                    TF1* fitx = runFit(new TGraph(testTDrift.size(), &testTDrift[0], &testX[0]));
-                    TF1* fity = runFit(new TGraph(testTDrift.size(), &testTDrift[0], &testY[0]));
-
-                    if(testTDrift.size() > 3) {
+                    
+                    npulsesFit->Fill(testTDrift.size());
+                    if(testTDrift.size() >= 5) {
+                        TF1* fitx = runFit(new TGraph(testTDrift.size(), &testTDrift[0], &testX[0]));
+                        TF1* fity = runFit(new TGraph(testTDrift.size(), &testTDrift[0], &testY[0]));
                         double xresidValue = (fitx->Eval(e.pulse_start_time[testPulse] - e.pulse_start_time[0])) - e.pulse_x_masa[testPulse];
                         double yresidValue = (fity->Eval(e.pulse_start_time[testPulse] - e.pulse_start_time[0])) - e.pulse_y_masa[testPulse];
 
                         double rResidValue = sqrt(xresidValue * xresidValue + yresidValue * yresidValue);
-
+                        // double rResidValue = xresidValue;
                         xresiduals->Fill(xresidValue);
                         yresiduals->Fill(yresidValue);
+                        rresiduals->Fill(rResidValue);
                         yvsx->Fill(xresidValue, yresidValue);
                         residvsnpe->Fill(e.pulse_total_npe[testPulse], rResidValue);
                         residvsradius->Fill(e.pulse_r_masa[testPulse], rResidValue);
@@ -128,28 +140,31 @@ class S2FitV3 : public Module {
                         residovernpe->Fill(rResidValue/e.pulse_total_npe[testPulse]);
                         if(rResidValue > 5) npeoverresid->Fill(e.pulse_total_npe[testPulse]);
                         npe->Fill(e.pulse_total_npe[testPulse]);
-                    }
 
-                    if(draw) {
-                        if(firstDraw) {
-                            canvas->cd(1);
-                            fitx->GetYaxis()->SetRangeUser(-18, 18);
-                            fitx->Draw();
+                        
+                        if(draw) {
+                            if(firstDraw) {
+                                canvas->cd(1);
+                                fitx->GetYaxis()->SetRangeUser(-20, 20);
+                                fitx->Draw();
 
-                            canvas->cd(2);
-                            fity->GetYaxis()->SetRangeUser(-18, 18);
-                            fity->Draw();
-                            firstDraw = false;
-                        } else {
-                            canvas->cd(1);
-                            fitx->GetYaxis()->SetRangeUser(-18, 18);
-                            fitx->Draw("same");
+                                canvas->cd(2);
+                                fity->GetYaxis()->SetRangeUser(-20, 20);
+                                fity->Draw();
+                                firstDraw = false;
+                            } else {
+                                canvas->cd(1);
+                                fitx->GetYaxis()->SetRangeUser(-20, 20);
+                                fitx->Draw("same");
 
-                            canvas->cd(2);
-                            fity->GetYaxis()->SetRangeUser(-18, 18);
-                            fity->Draw("same");
+                                canvas->cd(2);
+                                fity->GetYaxis()->SetRangeUser(-20, 20);
+                                fity->Draw("same");
+                            }
                         }
                     }
+
+                    
                 }
             }
         }
