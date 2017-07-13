@@ -7,7 +7,8 @@
 #include "MuonRunNumbers/SaveRunID.h"
 
 void SixtyMuon() {
-    Engine::init("/mnt/c/Users/Thomas/Documents/Muons/sixty/slad_sixty.root");
+    Engine::init("~/SLAD/slad_sixty.root");
+    //Engine::init("~/SLAD/UAr_500d_SLAD_v2_3_3_merged_v0.root");
 
     Engine* e = Engine::getInstance();
 
