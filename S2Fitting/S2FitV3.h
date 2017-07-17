@@ -32,17 +32,16 @@ public:
     TH1* yresiduals;
     TH1* rresiduals;
     TH2* yvsx;
-    TH2* yvsxcenter;
 
     TH2* residvsnpe;
+    TH2* xvsnpe;
     TH2* residvsradius;
     TH2* residvss1;
     TH2* residvstdrift;
-    TH1* residovernpe;    
-    TH1* npeoverresid;    
-    TH1* npetotal;    
 
-    TH1* npulsesFit;
+    TH2* topLocation;
+    TH2* bottomLocation;
+    TH2* yvsxslopes;
 
     TCanvas* canvas;
     string suffix;
@@ -57,15 +56,16 @@ public:
         yresiduals = new TH1F(("yresid" + suffix).c_str(), "yresiduals", 200, -40, 40);
         rresiduals = new TH1F(("rresid" + suffix).c_str(), "yresiduals", 200, -40, 40);
         yvsx = new TH2F(("yvsx" + suffix).c_str(), "yvsx", 100, -20, 20, 100, -20, 20);
-        yvsxcenter = new TH2F(("yvsx_center_" + suffix).c_str(), "y vs x", 50, -1, 1, 50, -1, 1);
 
-        residvsnpe = new TH2F(("residvsnpe" + suffix).c_str(), "Residual vs NPE", 100, 0, 1000, 50, -40, 40);
-        residvsradius = new TH2F(("residvsradius" + suffix).c_str(), "Residual vs Radius", 40, 0, 40, 50, -40, 40);
+        residvsnpe = new TH2F(("residvsnpe" + suffix).c_str(), "Residual vs NPE", 100, 0, 1000, 50, 0, 40);
+        xvsnpe = new TH2F(("xvsnpe" + suffix).c_str(), "X Residual vs NPE", 100, 0, 1000, 100, -40, 40);
+        residvsradius = new TH2F(("residvsradius" + suffix).c_str(), "Residual vs Radius", 40, 0, 40, 50, 0, 40);
         residvss1 = new TH2F(("residvss1" + suffix).c_str(), "Residual vs s1", 50, 0, 100000, 50, -40, 40);
-        residvstdrift = new TH2F(("residvstdrift" + suffix).c_str(), "Residual vs tdrift", 20, 0, 450, 50, -40, 40);
-        residovernpe = new TH1F(("residovernpe" + suffix).c_str(), "Residual/NPE", 500, 0, .01);
-        npeoverresid = new TH1F(("npeoverresid" + suffix).c_str(), "NPE/Residual", 500, 0, 10000);
-        npetotal = new TH1F(("npetotal" + suffix).c_str(), "NPE", 500, 0, 1000);
+        residvstdrift = new TH2F(("residvstdrift" + suffix).c_str(), "Residual vs tdrift", 18, 0, 450, 50, 0, 40);
+
+        topLocation = new TH2F(("topLocation" + suffix).c_str(), "Top location", 50, -40, 40, 50, -40, 40);
+        bottomLocation = new TH2F(("bottomLocation" + suffix).c_str(), "bottom location", 50, -40, 40, 50, -40, 40);
+        yvsxslopes = new TH2F(("yvsxslopes" + suffix).c_str(), "slopes", 100, -.5, .5, 100, -.5, .5);
 
         if(draw) {
             canvas = new TCanvas("can");
@@ -119,15 +119,16 @@ public:
                             && (data_y[i] > -20)
                             && (data_y[i] < 20);
                 if(goodPulse) {
-                    if(e.pulse_total_npe[i] > 50) {
+                    if(e.pulse_total_npe[i] > 200) {
                         pulsesToUseForFitting.push_back(i);
+                        if(draw) cout << e.pulse_total_npe[i] << endl;
+
                     }
                 }
             }
 
-            vector<double> testX, testY, testTDrift;
-
             for(int testPulse = startPulse; testPulse < e.npulses; testPulse++) {
+                vector<double> testX, testY, testTDrift;
 
                 // check to see if the test pulse reconstructed well
                 bool goodTestXY = (data_x[testPulse] > -20)
@@ -147,36 +148,37 @@ public:
                             testTDrift.push_back(e.pulse_start_time[pulsesToUseForFitting[i]] - e.pulse_start_time[0]);
                         }
                     }
-
+                    if(draw) cout << "npulses " << testTDrift.size() << endl;
                     if(testTDrift.size() >= 5) {
                         TF1* fitx = runFit(new TGraph(testTDrift.size(), &testTDrift[0], &testX[0]));
                         TF1* fity = runFit(new TGraph(testTDrift.size(), &testTDrift[0], &testY[0]));
-                        double xresidValue = (fitx->Eval(e.pulse_start_time[testPulse] - e.pulse_start_time[0])) - data_x[testPulse];
-                        double yresidValue = (fity->Eval(e.pulse_start_time[testPulse] - e.pulse_start_time[0])) - data_y[testPulse];
+                        double xResidValue = (fitx->Eval(e.pulse_start_time[testPulse] - e.pulse_start_time[0])) - data_x[testPulse];
+                        double yResidValue = (fity->Eval(e.pulse_start_time[testPulse] - e.pulse_start_time[0])) - data_y[testPulse];
 
-                        double rResidValue = sqrt(xresidValue * xresidValue + yresidValue * yresidValue);
-                        // double rResidValue = xresidValue;
+                        double rResidValue = sqrt(xResidValue * xResidValue + yResidValue * yResidValue);
+                        // double rResidValue = xResidValue;
 
                         float npe = e.pulse_total_npe[testPulse];
-                        xresiduals->Fill(xresidValue);
-                        yresiduals->Fill(yresidValue);
+                        xresiduals->Fill(xResidValue);
+                        yresiduals->Fill(yResidValue);
                         rresiduals->Fill(rResidValue);
-                        yvsx->Fill(xresidValue, yresidValue);
-                        yvsxcenter->Fill(xresidValue, yresidValue);
+                        yvsx->Fill(xResidValue, yResidValue);
 
-
-
-                        residvsnpe->Fill(e.pulse_total_npe[testPulse], rResidValue, 1/rResidValue);
+                        residvsnpe->Fill(e.pulse_total_npe[testPulse], rResidValue);
+                        xvsnpe->Fill(e.pulse_total_npe[testPulse], xResidValue);
                         if(npe > 20) residvsradius->Fill(data_r[testPulse], rResidValue, 1/rResidValue);
-                        residvss1->Fill(e.pulse_total_npe[0], rResidValue, 1/rResidValue);
-                        residvstdrift->Fill(e.pulse_start_time[testPulse] - e.pulse_start_time[0], rResidValue, 1/rResidValue);
-                        
-                        
-                        residovernpe->Fill(rResidValue/e.pulse_total_npe[testPulse]);
-                        if(rResidValue > 0.1) npeoverresid->Fill(e.pulse_total_npe[testPulse]);
-                        npetotal->Fill(e.pulse_total_npe[testPulse]);
+                        residvss1->Fill(e.pulse_total_npe[0], rResidValue);
+                        residvstdrift->Fill(e.pulse_start_time[testPulse] - e.pulse_start_time[0], rResidValue);
 
-                        
+                        // residvsnpe->Fill(e.pulse_total_npe[testPulse], rResidValue, 1/rResidValue);
+                        // if(npe > 20) residvsradius->Fill(data_r[testPulse], rResidValue, 1/rResidValue);
+                        // residvss1->Fill(e.pulse_total_npe[0], rResidValue, 1/rResidValue);
+                        // residvstdrift->Fill(e.pulse_start_time[testPulse] - e.pulse_start_time[0], rResidValue, 1/rResidValue);
+
+                        topLocation->Fill(fitx->Eval(0), fity->Eval(0));
+                        bottomLocation->Fill(fitx->Eval(350), fity->Eval(350));
+                        yvsxslopes->Fill(fitx->GetParameter(0), fity->GetParameter(0));
+
                         if(draw) {
                             if(firstDraw) {
                                 canvas->cd(1);
@@ -198,9 +200,27 @@ public:
                             }
                         }
                     }
-
-                    
                 }
+            }
+
+            if(draw) {
+                vector<float> pulseX, pulseY, pulseT;
+
+                for(int i = 0; i < pulsesToUseForFitting.size(); i++) {
+                    pulseX.push_back(data_x[pulsesToUseForFitting[i]]);
+                    pulseY.push_back(data_y[pulsesToUseForFitting[i]]);
+                    pulseT.push_back(e.pulse_start_time[pulsesToUseForFitting[i]]);
+                }
+
+                canvas->cd(1);
+                TGraph* xvst = new TGraph(pulseT.size(), &pulseT[0], &pulseX[0]);
+                xvst->Draw("P*");
+
+                canvas->cd(2);
+                TGraph* yvst = new TGraph(pulseT.size(), &pulseT[0], &pulseY[0]);
+                yvst->Draw("P*");
+
+
             }
         }
     }

@@ -5,22 +5,23 @@
 #include "darkside/EnergyCorrections.h"
 
 #include "MuonRunNumbers/SaveRunID.h"
+#include "MuonRunNumbers/SaveEventFromSlad.h"
 
-void SixtyMuon() {
-    Engine::init("~/SLAD/slad_sixty.root");
-    //Engine::init("~/SLAD/UAr_500d_SLAD_v2_3_3_merged_v0.root");
+void SaveRunNumbers() {
+    //Engine::init("~/SLAD/slad_muon_all.root");
+    Engine::init("~/SLAD/UAr_500d_SLAD_v2_3_3_merged_v0.root");
 
     Engine* e = Engine::getInstance();
 
     e->slad->addSladFile("_allpulses.root", "pulse_info");
     e->slad->addSladFile("_masas_xy.root", "allpulses_xy");
-    //e->slad->addSladFile("_veto_cluster.root", "veto");
     e->slad->addSladFile("_xylocator_xy.root", "allpulses_xyl_xy");
     e->slad->addSladFile("_aww_xy.root", "allpulses_aww_xy");
 
     e->setOutput("sixtyMuons.root");
 
-    e->addModule(new SaveRunID());
+    //e->addModule(new SaveRunID()); // run on muons
+    e->addModule(new SaveEventFromSlad()); // run on full slad file
 
     e->run();
 }
