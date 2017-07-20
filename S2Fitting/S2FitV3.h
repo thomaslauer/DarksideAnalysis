@@ -228,7 +228,7 @@ public:
                 yvst->Draw("P*");
 
                 vector<float> pulse_npe_graph;
-                for(int i = 0; i < e.npulses; i++) {
+                for(int i = 0; i < pulsesToUseForFitting.size(); i++) {
                     pulse_npe_graph.push_back(e.pulse_total_npe[pulsesToUseForFitting[i]]);
                 }
 
