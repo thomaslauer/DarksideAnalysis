@@ -112,6 +112,9 @@ public:
         TTree* events = slad->getFullTree();
         slad->linkTree(events, e);
 
+        outputFile = new TFile(outputFilename, "RECREATE");
+        outputFile->cd();
+
         for(unsigned int i = 0; i < modules.size(); i++) {
             modules[i]->init();
         }
@@ -131,6 +134,10 @@ public:
         for(unsigned int i = 0; i < modules.size(); i++) {
             modules[i]->cleanup();
         }
+
+        outputFile->cd();
+        outputFile->Write();
+        outputFile->Close();
     }
 
     unsigned int getCurrentSladEvent() {
