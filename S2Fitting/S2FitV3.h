@@ -46,12 +46,13 @@ public:
     TCanvas* canvas;
     string suffix;
 
-    S2FitV3(string histogramSuffix, int xy) {
+    S2FitV3(string histogramSuffix, int xy, bool doDraw = false) {
+        draw = doDraw;
         suffix = histogramSuffix;
         xyAlgorithm = xy;
     }
     void init() {
-        output.open("output/s2FitInfo.txt");
+        output.open("output/fittableMuonEvents.txt");
         xresiduals = new TH1F(("xresid" + suffix).c_str(), "xresiduals", 200, -40, 40);
         yresiduals = new TH1F(("yresid" + suffix).c_str(), "yresiduals", 200, -40, 40);
         rresiduals = new TH1F(("rresid" + suffix).c_str(), "yresiduals", 200, -40, 40);
@@ -69,7 +70,7 @@ public:
 
         if(draw) {
             canvas = new TCanvas("can");
-            canvas->Divide(2, 1);
+            canvas->Divide(3, 1);
         }
     }
     
@@ -118,13 +119,19 @@ public:
                             && (data_x[i] < 20)
                             && (data_y[i] > -20)
                             && (data_y[i] < 20);
-                if(goodPulse) {
-                    if(e.pulse_total_npe[i] > 200) {
-                        pulsesToUseForFitting.push_back(i);
-                        if(draw) cout << e.pulse_total_npe[i] << endl;
+                if(goodPulse && e.pulse_total_npe[i] > 10000) {
+                    // if(e.pulse_saturated[i] == true) { // e.pulse_total_npe[i] > 200
+                    //     pulsesToUseForFitting.push_back(i);
+                    //     if(draw) cout << e.pulse_total_npe[i] << endl;
+                    // }
 
-                    }
+                    pulsesToUseForFitting.push_back(i);
+                    if(draw) cout << e.pulse_total_npe[i] << endl;
                 }
+            }
+
+            if((pulsesToUseForFitting.size() >= 5) && (e.run_id > 10000)) {
+                output << e.run_id << " " << e.event_id << endl;
             }
 
             for(int testPulse = startPulse; testPulse < e.npulses; testPulse++) {
@@ -220,7 +227,14 @@ public:
                 TGraph* yvst = new TGraph(pulseT.size(), &pulseT[0], &pulseY[0]);
                 yvst->Draw("P*");
 
+                vector<float> pulse_npe_graph;
+                for(int i = 0; i < e.npulses; i++) {
+                    pulse_npe_graph.push_back(e.pulse_total_npe[pulsesToUseForFitting[i]]);
+                }
 
+                canvas->cd(3);
+                TGraph* npevst = new TGraph(pulseT.size(), &pulseT[0], &pulse_npe_graph[0]);
+                npevst->Draw("AC*");
             }
         }
     }

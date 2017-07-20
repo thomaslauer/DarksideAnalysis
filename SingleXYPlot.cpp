@@ -4,6 +4,10 @@
 
 #include "darkside/SladLoader.h"
 #include "darkside/Module.h"
+#include "darkside/EnergyCorrections.h"
+#include "CalculateEnergy.h"
+
+#include "S2Fitting/S2FitV3.h"
 
 #include "TGraph.h"
 #include "TH1.h"
@@ -84,9 +88,10 @@ class XYPlot : public Module {
 
 
 void SingleXYPlot() {
-    //Engine::init("/mnt/c/Users/Thomas/Desktop/SLAD/UAr_500d_SLAD_v2_3_3_merged_v0.root");
+    // Engine::init("~/SLAD/UAr_500d_SLAD_v2_3_3_merged_v0.root");
     //Engine::init("/mnt/c/Users/Thomas/Desktop/slad_sixty.root");
-    Engine::init("~/SLAD/slad_fifty_t4.root");
+    // Engine::init("~/SLAD/slad_muon_all.root");
+    Engine::init("~/SLAD/slad_muon_tight.root");
     Engine* e = Engine::getInstance();
 
     e->slad->addSladFile("_allpulses.root", "pulse_info");
@@ -94,7 +99,8 @@ void SingleXYPlot() {
     e->slad->addSladFile("_xylocator_xy.root", "allpulses_xyl_xy");
     e->slad->addSladFile("_aww_xy.root", "allpulses_aww_xy");
 
-    e->addModule(new XYPlot());
+    // e->addModule(new XYPlot());
+    e->addModule(new S2FitV3("", 0, true));
 
-    e->runSingleEvent(4);
+    e->runSingleEvent(6);
 }

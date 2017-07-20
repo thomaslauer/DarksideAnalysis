@@ -89,14 +89,12 @@ public:
 
         double rawTimeCorr = 0;
         for(int pulse = 0; pulse < e.npulses; pulse++) {
-            if(e.pulse_f90[pulse] < 0.15) {
-                // Correct S2 pulses
-                float s2Corr = calculateS2Correction(e, pulse, 0);
-                float pulseEnergyCorr = e.pulse_total_npe[pulse] * s2Corr;
-                totalS2Corrected += pulseEnergyCorr;
+            // Correct S2 pulses
+            float s2Corr = calculateS2Correction(e, pulse, 0);
+            float pulseEnergyCorr = e.pulse_total_npe[pulse] * s2Corr;
+            totalS2Corrected += pulseEnergyCorr;
 
-                rawTimeCorr += (e.pulse_start_time[pulse]-e.pulse_start_time[0])*pulseEnergyCorr;
-            }
+            rawTimeCorr += (e.pulse_start_time[pulse]-e.pulse_start_time[0])*pulseEnergyCorr;
         }
 
         double averageTime = 0;
