@@ -158,5 +158,11 @@ public:
         
         events->SetBranchStatus("veto.veto_wt_total_charge", 1);
         events->SetBranchAddress("veto.veto_wt_total_charge", &e.veto_wt_charge);
+
+        events->SetBranchStatus("pulse_info_peak_time", 1);
+        events->SetBranchAddress("pulse_info_peak_time", e.pulse_peak_time);
+
+        events->SetBranchStatus("pulse_info_peak_amp", 1);
+        events->SetBranchAddress("pulse_info_peak_amp", e.pulse_peak_amp);
     }
 };

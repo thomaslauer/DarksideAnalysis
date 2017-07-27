@@ -58,4 +58,7 @@ struct Event {
 	
 	float correctedS1;
 	float correctedS2;
+
+	float pulse_peak_time[100];
+	float pulse_peak_amp[100];
 };
