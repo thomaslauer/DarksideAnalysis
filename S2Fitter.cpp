@@ -7,6 +7,7 @@
 #include "S2Fitting/S2Fit.h"
 #include "S2Fitting/S2FitV2.h"
 #include "S2Fitting/S2FitV3.h"
+#include "S2Fitting/S2FitV4.h"
 
 #include "TGraph.h"
 #include "TF1.h"
@@ -41,6 +42,9 @@ public:
         s1->Fill(e.s1);
 
         for(int i = 0; i < e.npulses; i++) {
+
+            // cout << e.pulse_total_npe[i] << " " << e.pulse_saturated[i] << endl;
+
             if(e.pulse_saturated[i]) {
                 npesat->Fill(e.pulse_total_npe[i]);
             } else {
@@ -53,7 +57,7 @@ public:
 
 void S2Fitter() {
     // Engine::init("~/SLAD/slad_muon_all.root");
-    Engine::init("~/SLAD/slad_muon_tight.root");
+    Engine::init("~/SLAD/slad_muon_tight_more.root");
     Engine* e = Engine::getInstance();
 
     e->slad->addSladFile("_allpulses.root", "pulse_info");
@@ -65,15 +69,15 @@ void S2Fitter() {
     e->addModule(new EnergyCorrections());
     e->addModule(new CalculateEnergy());
 
-    e->addModule(new S2FitV3("_masa", 0));
-    e->addModule(new S2FitV3("_jason", 1));
-    e->addModule(new S2FitV3("_andrew", 2));
+    e->addModule(new S2FitV4("_masa", 0));
+    e->addModule(new S2FitV4("_jason", 1));
+    e->addModule(new S2FitV4("_andrew", 2));
     e->addModule(new NpeModule());
     // e->addModule(new S2Fit());
 
     // e->setOutput("output/output.root");
-    e->setOutput("output/output_tight.root");
+    e->setOutput("output/output_v4.root");
 
-    // e->runSingleEvent(event);
+    // e->runSingleEvent(1);
     e->run();
 }

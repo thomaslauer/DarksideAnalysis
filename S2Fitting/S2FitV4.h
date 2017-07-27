@@ -20,8 +20,6 @@ using namespace std;
 class S2FitV4 : public Module {
 public:
     ofstream output;
-    vector<int> runNumbers;
-    vector<int> eventNumbers;
 
     bool draw = false;
     bool firstDraw = true;
@@ -54,22 +52,10 @@ public:
         xyAlgorithm = xy;
     }
     void init() {
-
-        ifstream fileInput;
-        fileInput.open("sladFileNumbers.txt");
-        
-        while(fileInput) {
-            int runNum, eventNum;
-            int dumbVar;
-            fileInput >> dumbVar >> dumbVar >> runNum >> eventNum >> dumbVar;
-            runNumbers.push_back(runNum);
-            eventNumbers.push_back(eventNum);
-            cout << runNum << " " << eventNum << endl;
-        }
         output.open("output/fittableMuonEvents.txt");
-        xresiduals = new TH1F(("xresid" + suffix).c_str(), "xresiduals", 200, -40, 40);
-        yresiduals = new TH1F(("yresid" + suffix).c_str(), "yresiduals", 200, -40, 40);
-        rresiduals = new TH1F(("rresid" + suffix).c_str(), "yresiduals", 200, -40, 40);
+        xresiduals = new TH1F(("xresid" + suffix).c_str(), "xresiduals", 400, -20, 20);
+        yresiduals = new TH1F(("yresid" + suffix).c_str(), "yresiduals", 400, -20, 20);
+        rresiduals = new TH1F(("rresid" + suffix).c_str(), "yresiduals", 400, -20, 20);
         yvsx = new TH2F(("yvsx" + suffix).c_str(), "yvsx", 100, -20, 20, 100, -20, 20);
 
         residvsnpe = new TH2F(("residvsnpe" + suffix).c_str(), "Residual vs NPE", 100, 0, 1000, 50, 0, 40);
@@ -97,14 +83,6 @@ public:
     }
 
     void processEvent(Event& e) {
-
-        for(int i = 0; i < runNumbers.size(); i++) {
-            if(e.run_id == runNumbers[i] && e.event_id == eventNumbers[i] && e.npulses > 10) {
-                // good, run event
-            } else {
-                return;
-            }
-        }
 
         vector<float> data_x;
         vector<float> data_y;
@@ -141,14 +119,11 @@ public:
                             && (data_x[i] < 20)
                             && (data_y[i] > -20)
                             && (data_y[i] < 20);
-                if(goodPulse) {
-                    // if(e.pulse_saturated[i] == true) { // e.pulse_total_npe[i] > 200
-                    //     pulsesToUseForFitting.push_back(i);
-                    //     if(draw) cout << e.pulse_total_npe[i] << endl;
-                    // }
-
-                    pulsesToUseForFitting.push_back(i);
-                    if(draw) cout << e.pulse_total_npe[i] << endl;
+                if(goodPulse && e.pulse_saturated[i] == true) {
+                    if(e.pulse_saturated[i] == true) { // e.pulse_total_npe[i] > 200
+                        pulsesToUseForFitting.push_back(i);
+                        if(draw) cout << e.pulse_total_npe[i] << endl;
+                    }
                 }
             }
 
@@ -159,13 +134,24 @@ public:
             for(int testPulse = startPulse; testPulse < e.npulses; testPulse++) {
                 vector<double> testX, testY, testTDrift;
 
+                if(draw && e.pulse_saturated[testPulse] > 0) {
+                    cout << "Pulse " << testPulse << " at " << e.pulse_start_time[testPulse] << " is saturated" << endl;
+                }
+
+                if(false) {
+                    cout << "Peak time " << e.pulse_peak_time[testPulse];
+                    cout << " Peak amp " << e.pulse_peak_amp[testPulse];
+
+                    cout << endl;
+                }
+
                 // check to see if the test pulse reconstructed well
                 bool goodTestXY = (data_x[testPulse] > -20)
                             && (data_x[testPulse] < 20)
                             && (data_y[testPulse] > -20)
                             && (data_y[testPulse] < 20);
                 
-                if(goodTestXY) {
+                if(goodTestXY && e.pulse_saturated[testPulse] == true) {
                     
                     for(int i = 0; i < pulsesToUseForFitting.size(); i++) {
                         if(pulsesToUseForFitting[i] != testPulse) {
@@ -177,7 +163,6 @@ public:
                             testTDrift.push_back(e.pulse_start_time[pulsesToUseForFitting[i]] - e.pulse_start_time[0]);
                         }
                     }
-                    if(draw) cout << "npulses " << testTDrift.size() << endl;
                     if(testTDrift.size() >= 5) {
                         TF1* fitx = runFit(new TGraph(testTDrift.size(), &testTDrift[0], &testX[0]));
                         TF1* fity = runFit(new TGraph(testTDrift.size(), &testTDrift[0], &testY[0]));
@@ -235,10 +220,10 @@ public:
             if(draw) {
                 vector<float> pulseX, pulseY, pulseT;
 
-                for(int i = 0; i < pulsesToUseForFitting.size(); i++) {
-                    pulseX.push_back(data_x[pulsesToUseForFitting[i]]);
-                    pulseY.push_back(data_y[pulsesToUseForFitting[i]]);
-                    pulseT.push_back(e.pulse_start_time[pulsesToUseForFitting[i]]);
+                for(int i = 0; i < e.npulses; i++) {
+                    pulseX.push_back(data_x[i]);
+                    pulseY.push_back(data_y[i]);
+                    pulseT.push_back(e.pulse_start_time[i]);
                 }
 
                 canvas->cd(1);
@@ -250,8 +235,8 @@ public:
                 yvst->Draw("P*");
 
                 vector<float> pulse_npe_graph;
-                for(int i = 0; i < pulsesToUseForFitting.size(); i++) {
-                    pulse_npe_graph.push_back(e.pulse_total_npe[pulsesToUseForFitting[i]]);
+                for(int i = 0; i < e.npulses; i++) {
+                    pulse_npe_graph.push_back(e.pulse_total_npe[i]);
                 }
 
                 canvas->cd(3);
