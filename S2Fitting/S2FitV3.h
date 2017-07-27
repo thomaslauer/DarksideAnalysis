@@ -119,7 +119,7 @@ public:
                             && (data_x[i] < 20)
                             && (data_y[i] > -20)
                             && (data_y[i] < 20);
-                if(goodPulse && e.pulse_total_npe[i] > 10000) {
+                if(goodPulse && e.pulse_total_npe[i] > 5000) {
                     // if(e.pulse_saturated[i] == true) { // e.pulse_total_npe[i] > 200
                     //     pulsesToUseForFitting.push_back(i);
                     //     if(draw) cout << e.pulse_total_npe[i] << endl;
@@ -143,7 +143,7 @@ public:
                             && (data_y[testPulse] > -20)
                             && (data_y[testPulse] < 20);
                 
-                if(goodTestXY) {
+                if(goodTestXY && e.pulse_total_npe[testPulse] > 100) {
                     
                     for(int i = 0; i < pulsesToUseForFitting.size(); i++) {
                         if(pulsesToUseForFitting[i] != testPulse) {
@@ -213,10 +213,10 @@ public:
             if(draw) {
                 vector<float> pulseX, pulseY, pulseT;
 
-                for(int i = 0; i < pulsesToUseForFitting.size(); i++) {
-                    pulseX.push_back(data_x[pulsesToUseForFitting[i]]);
-                    pulseY.push_back(data_y[pulsesToUseForFitting[i]]);
-                    pulseT.push_back(e.pulse_start_time[pulsesToUseForFitting[i]]);
+                for(int i = 0; i < e.npulses; i++) {
+                    pulseX.push_back(data_x[i]);
+                    pulseY.push_back(data_y[i]);
+                    pulseT.push_back(e.pulse_start_time[i]);
                 }
 
                 canvas->cd(1);
@@ -228,8 +228,8 @@ public:
                 yvst->Draw("P*");
 
                 vector<float> pulse_npe_graph;
-                for(int i = 0; i < pulsesToUseForFitting.size(); i++) {
-                    pulse_npe_graph.push_back(e.pulse_total_npe[pulsesToUseForFitting[i]]);
+                for(int i = 0; i < e.npulses; i++) {
+                    pulse_npe_graph.push_back(e.pulse_total_npe[i]);
                 }
 
                 canvas->cd(3);
