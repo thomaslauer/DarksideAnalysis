@@ -20,7 +20,13 @@ class SaveRunID : public Module {
     }
 
     void processEvent(Event& e) {
-        fileOutput << e.run_id << " " << e.event_id << endl;
+        int nsat = 0;
+
+        for(int i = 0; i < e.npulses; i++) {
+            nsat += e.pulse_saturated[i];
+        }
+
+        fileOutput << e.run_id << " " << e.event_id << " " << nsat << endl;
     }
 
     void cleanup() {

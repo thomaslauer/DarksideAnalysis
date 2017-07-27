@@ -9,8 +9,8 @@
 
 void SaveRunNumbers() {
     //Engine::init("~/SLAD/slad_muon_all.root");
-    Engine::init("~/SLAD/UAr_500d_SLAD_v2_3_3_merged_v0.root");
-    // Engine::init("~/SLAD/slad_muon_tight.root");
+    // Engine::init("~/SLAD/UAr_500d_SLAD_v2_3_3_merged_v0.root");
+    Engine::init("~/SLAD/slad_muon_tight_more.root");
 
     Engine* e = Engine::getInstance();
 
@@ -21,8 +21,8 @@ void SaveRunNumbers() {
 
     e->setOutput("output/tightMuons.root");
 
-    // e->addModule(new SaveRunID()); // run on muons
-    e->addModule(new SaveEventFromSlad()); // run on full slad file
+    e->addModule(new SaveRunID()); // run on muons
+    // e->addModule(new SaveEventFromSlad()); // run on full slad file
 
     e->run();
 }
