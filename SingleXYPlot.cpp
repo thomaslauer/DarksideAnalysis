@@ -100,8 +100,8 @@ void SingleXYPlot() {
     e->slad->addSladFile("_aww_xy.root", "allpulses_aww_xy");
 
     // e->addModule(new XYPlot());
-    e->addModule(new S2FitV4("", 0, true));
+    e->addModule(new S2FitV4("", 1, true));
 
 
-    e->runSingleEvent(8);
+    e->runSingleEvent(3);
 }
