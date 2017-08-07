@@ -38,6 +38,7 @@ public:
     TH2* residvsradius;
     TH2* residvss1;
     TH2* residvstdrift;
+    TH2* residvsx;
 
     TH2* topLocation;
     TH2* bottomLocation;
@@ -58,11 +59,12 @@ public:
         rresiduals = new TH1F(("rresid" + suffix).c_str(), "yresiduals", 400, -20, 20);
         yvsx = new TH2F(("yvsx" + suffix).c_str(), "yvsx", 100, -20, 20, 100, -20, 20);
 
-        residvsnpe = new TH2F(("residvsnpe" + suffix).c_str(), "Residual vs NPE", 100, 0, 1000, 50, 0, 40);
-        xvsnpe = new TH2F(("xvsnpe" + suffix).c_str(), "X Residual vs NPE", 100, 0, 1000, 100, -40, 40);
-        residvsradius = new TH2F(("residvsradius" + suffix).c_str(), "Residual vs Radius", 40, 0, 40, 50, 0, 40);
-        residvss1 = new TH2F(("residvss1" + suffix).c_str(), "Residual vs s1", 50, 0, 100000, 50, -40, 40);
-        residvstdrift = new TH2F(("residvstdrift" + suffix).c_str(), "Residual vs tdrift", 18, 0, 450, 50, 0, 40);
+        residvsnpe = new TH2F(("residvsnpe" + suffix).c_str(), "Residual vs NPE", 20, 0, 1000, 1000, 0, 40);
+        xvsnpe = new TH2F(("xvsnpe" + suffix).c_str(), "X Residual vs NPE", 1000, 0, 1000, 1000, -40, 40);
+        residvsradius = new TH2F(("residvsradius" + suffix).c_str(), "Residual vs Radius", 100, 0, 20, 1000, 0, 20);
+        residvss1 = new TH2F(("residvss1" + suffix).c_str(), "Residual vs s1", 1000, 0, 100000, 1000, -40, 40);
+        residvstdrift = new TH2F(("residvstdrift" + suffix).c_str(), "Residual vs tdrift", 36, 0, 450, 1000, 0, 40);
+        residvsx = new TH2F(("residvsx" + suffix).c_str(), "Residual vs x", 40, -20, 20, 1000, 0, 40);
 
         topLocation = new TH2F(("topLocation" + suffix).c_str(), "Top location", 50, -40, 40, 50, -40, 40);
         bottomLocation = new TH2F(("bottomLocation" + suffix).c_str(), "bottom location", 50, -40, 40, 50, -40, 40);
@@ -109,22 +111,45 @@ public:
                 && ((e.live_time + e.inhibit_time) >= 1.35e-3)
                 && (e.live_time < 1.);
 
-        int startPulse = 1;
+        int startPulse = 2;
         if(basicCuts) {
             vector<int> pulsesToUseForFitting; // a vector of pulse indices we can use for making fits later
-
+            bool hasStarted = false;
+            bool hasEnded = false;
+            bool failedPulses = false;
             // Selects pulses that we can use for more in depth analysis
             for(int i = startPulse; i < e.npulses; i++) {
-                bool goodPulse = (data_x[i] > -20)
-                            && (data_x[i] < 20)
-                            && (data_y[i] > -20)
-                            && (data_y[i] < 20);
-                if(goodPulse && e.pulse_saturated[i] == true) {
-                    if(e.pulse_saturated[i] == true) { // e.pulse_total_npe[i] > 200
-                        pulsesToUseForFitting.push_back(i);
-                        if(draw) cout << e.pulse_total_npe[i] << endl;
+                bool goodPulse = (data_x[i] > -18)
+                            && (data_x[i] < 18)
+                            && (data_y[i] > -18)
+                            && (data_y[i] < 18);
+                if(goodPulse) {
+                    if(e.pulse_total_npe[i] > 200000) {
+
+                        if(!hasStarted) {
+                            hasStarted = true;
+                        }
+
+                        if(!hasEnded) {
+                            // currently in the first muon
+                            pulsesToUseForFitting.push_back(i);
+                        } else {
+                            if(!failedPulses) {
+                                failedPulses = true;
+                            }
+                        }
+                    } else {
+                        // we've either left the muon track or not started
+                        if(hasStarted) {
+                            hasEnded = true;
+                            // stop tracking
+                        }
                     }
                 }
+            }
+
+            if(failedPulses) {
+                cout << Engine::getInstance()->getCurrentSladEvent() << endl;
             }
 
             if((pulsesToUseForFitting.size() >= 5) && (e.run_id > 10000)) {
@@ -146,12 +171,12 @@ public:
                 }
 
                 // check to see if the test pulse reconstructed well
-                bool goodTestXY = (data_x[testPulse] > -20)
-                            && (data_x[testPulse] < 20)
-                            && (data_y[testPulse] > -20)
-                            && (data_y[testPulse] < 20);
+                bool goodTestXY = (data_x[testPulse] > -18)
+                            && (data_x[testPulse] < 18)
+                            && (data_y[testPulse] > -18)
+                            && (data_y[testPulse] < 18);
                 
-                if(goodTestXY && e.pulse_saturated[testPulse] == true) {
+                if(goodTestXY && e.pulse_total_npe[testPulse] > 200000) {
                     
                     for(int i = 0; i < pulsesToUseForFitting.size(); i++) {
                         if(pulsesToUseForFitting[i] != testPulse) {
@@ -176,13 +201,16 @@ public:
                         xresiduals->Fill(xResidValue);
                         yresiduals->Fill(yResidValue);
                         rresiduals->Fill(rResidValue);
-                        yvsx->Fill(xResidValue, yResidValue);
+                        yvsx->Fill(data_x[testPulse], data_y[testPulse]);
 
                         residvsnpe->Fill(e.pulse_total_npe[testPulse], rResidValue);
                         xvsnpe->Fill(e.pulse_total_npe[testPulse], xResidValue);
                         if(npe > 20) residvsradius->Fill(data_r[testPulse], rResidValue, 1/rResidValue);
-                        residvss1->Fill(e.pulse_total_npe[0], rResidValue);
-                        residvstdrift->Fill(e.pulse_start_time[testPulse] - e.pulse_start_time[0], rResidValue);
+                        residvss1->Fill(e.pulse_total_npe[0], rResidValue, 1/rResidValue);
+                        residvstdrift->Fill(e.pulse_start_time[testPulse] - e.pulse_start_time[0], rResidValue, 1/rResidValue);
+
+                        residvsx->Fill(data_x[testPulse], rResidValue, 1/rResidValue);
+
 
                         // residvsnpe->Fill(e.pulse_total_npe[testPulse], rResidValue, 1/rResidValue);
                         // if(npe > 20) residvsradius->Fill(data_r[testPulse], rResidValue, 1/rResidValue);

@@ -66,8 +66,8 @@ void S2Fitter() {
     e->slad->addSladFile("_xylocator_xy.root", "allpulses_xyl_xy");
     e->slad->addSladFile("_aww_xy.root", "allpulses_aww_xy");
 
-    e->addModule(new EnergyCorrections());
-    e->addModule(new CalculateEnergy());
+    // e->addModule(new EnergyCorrections());
+    // e->addModule(new CalculateEnergy());
 
     e->addModule(new S2FitV4("_masa", 0));
     e->addModule(new S2FitV4("_jason", 1));
@@ -76,7 +76,7 @@ void S2Fitter() {
     // e->addModule(new S2Fit());
 
     // e->setOutput("output/output.root");
-    e->setOutput("output/output_v4.root");
+    e->setOutput("output/output_v4_1.root");
 
     // e->runSingleEvent(1);
     e->run();
