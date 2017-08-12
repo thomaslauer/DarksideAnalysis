@@ -24,8 +24,6 @@ public:
     bool draw = false;
     bool firstDraw = true;
 
-    double residualThreshold = 6;
-
     int xyAlgorithm;
 
     TH1* xresiduals;
