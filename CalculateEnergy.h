@@ -41,20 +41,10 @@ public:
             f90->Fill(e.pulse_f90[i]);
         }
 
-        if(basicCuts && !runNumberCuts && e.npulses > 3) {
-            double energy = .0195*(e.s1/0.154+e.s2/35.34);
+        if(basicCuts && !runNumberCuts && e.npulses > 3 && e.total_f90>0.1 && e.s1>60&&e.tdrift>5&&e.tdrift<380&&e.has_s3==false) {
+            double energy = .0195*(e.correctedS1/0.154+e.correctedS2/35.34);
             henergy->Fill(energy);
-            henergyvslsv->Fill(e.veto_lsv_charge, energy);
             if(mdraw) cout << "Energy is " << energy << endl;
         }
-
-        // if(basicCuts && !runNumberCuts && e.npulses > 3 && e.total_f90>0.1 && e.s1>60&&e.tdrift>5&&e.tdrift<380&&e.has_s3==false) {
-        //     double energy = .0195*(e.correctedS1/0.154+e.correctedS2/35.34);
-        //     henergy->Fill(energy);
-        //     if(mdraw) cout << "Energy is " << energy << endl;
-        // }
-    }
-
-    void cleanup() {
     }
 };
